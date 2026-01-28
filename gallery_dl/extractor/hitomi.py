@@ -66,7 +66,11 @@ class HitomiGalleryExtractor(HitomiExtractor, GalleryExtractor):
 
         tags = []
         for tinfo in iget("tags") or ():
-            tag = string.capwords(tinfo["tag"])
+            tag = tinfo["tag"]
+            if tinfo.get("female"):
+                tag = "female:" + tag
+            elif tinfo.get("male"):
+                tag = "male:" + tag
             tags.append(tag)
 
         return {
