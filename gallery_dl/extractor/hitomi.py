@@ -1,11 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# Copyright 2015-2025 Mike Fährmann
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 2 as
-# published by the Free Software Foundation.
-
 """Extractors for https://hitomi.la/"""
 
 from .common import GalleryExtractor, Extractor, Message
@@ -49,6 +42,9 @@ class HitomiGalleryExtractor(HitomiExtractor, GalleryExtractor):
                r"/(?:manga|doujinshi|cg|gamecg|imageset|galleries|reader)"
                r"/(?:[^/?#]+-)?(\d+)")
     example = "https://hitomi.la/manga/TITLE-867789.html"
+
+    # CHANGED: Switched {num:>03} to {filename} so your custom naming logic is used
+    filename_fmt = "{category}_{gallery_id}_{filename}.{extension}"
 
     def __init__(self, match):
         GalleryExtractor.__init__(self, match, False)
@@ -96,11 +92,21 @@ class HitomiGalleryExtractor(HitomiExtractor, GalleryExtractor):
         check = (fmt != "webp")
 
         results = []
-        for image in self.info["files"]:
+
+        # CHANGED: Added enumerate to calculate padding properly based on list index
+        for i, image in enumerate(self.info["files"], 1):
             if check:
                 ext = fmt if image.get("has" + fmt) else "webp"
             ihash = image["hash"]
+
+            # Calculate padded page number (e.g. "0001", "0002")
+            page_str = f"{i:>04}"
+
+            # --- Main Image ---
             idata = text.nameext_from_url(image["name"])
+
+            # CHANGED: Explicitly set filename to the padded number
+            idata["filename"] = page_str
             idata["extension_original"] = idata["extension"]
             idata["extension"] = ext
 
@@ -109,6 +115,22 @@ class HitomiGalleryExtractor(HitomiExtractor, GalleryExtractor):
             url = (f"https://{ext[0]}{gg_m.get(inum, gg_default) + 1}."
                    f"{self.domain}/{gg_b}/{inum}/{ihash}.{ext}")
             results.append((url, idata))
+
+            # Shared parts for thumbnails (tn.{domain}/{dir}/{part1}/{part2}/{hash}.webp)
+            tn_part1 = ihash[-1]
+            tn_part2 = ihash[-3:-1]
+
+            # --- Small Thumbnail ---
+            small_tn_url = (f"https://tn.{self.domain}/webpsmalltn/"
+                            f"{tn_part1}/{tn_part2}/{ihash}.{ext}")
+
+            # CHANGED: Explicitly set filename with "thumb_" prefix and padded number
+            small_tn_data = {
+                "filename": f"thumb_{page_str}",
+                "extension": ext
+            }
+            results.append((small_tn_url, small_tn_data))
+
         return results
 
 
@@ -269,4 +291,3 @@ def _parse_gg(extr):
     b = util.re_compile(r"b:\s*[\"'](.+)[\"']").search(page)
 
     return m, b[1].strip("/"), int(d[1]) if d else 0
-
