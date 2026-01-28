@@ -269,3 +269,4 @@ def _parse_gg(extr):
     b = util.re_compile(r"b:\s*[\"'](.+)[\"']").search(page)
 
     return m, b[1].strip("/"), int(d[1]) if d else 0
+
