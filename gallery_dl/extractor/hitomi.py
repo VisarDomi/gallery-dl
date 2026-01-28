@@ -63,7 +63,7 @@ class HitomiGalleryExtractor(HitomiExtractor, GalleryExtractor):
         iget = info.get
 
         if language := iget("language"):
-            language = language.capitalize()
+            language = language
 
         if date := iget("date"):
             date += ":00"
@@ -71,19 +71,15 @@ class HitomiGalleryExtractor(HitomiExtractor, GalleryExtractor):
         tags = []
         for tinfo in iget("tags") or ():
             tag = string.capwords(tinfo["tag"])
-            if tinfo.get("female"):
-                tag += " ♀"
-            elif tinfo.get("male"):
-                tag += " ♂"
             tags.append(tag)
 
         return {
             "gallery_id": text.parse_int(info["id"]),
             "title"     : info["title"],
             "title_jpn" : info.get("japanese_title") or "",
-            "type"      : info["type"].capitalize(),
+            "type"      : info["type"],
             "language"  : language,
-            "lang"      : util.language_to_code(language),
+            "lang"      : util.language_to_code(language.capitalize()),
             "date"      : self.parse_datetime_iso(date),
             "tags"      : tags,
             "artist"    : [o["artist"] for o in iget("artists") or ()],
@@ -167,7 +163,7 @@ class HitomiIndexExtractor(HitomiTagExtractor):
     """Extractor for galleries from index searches on hitomi.la"""
     subcategory = "index"
     pattern = r"(?:https?://)?hitomi\.la/(\w+)-(\w+)\.html"
-    example = "https://hitomi.la/index-LANG.html"
+    example = "https://hitomi.la/index-japanese.html"
 
     def __init__(self, match):
         Extractor.__init__(self, match)
@@ -240,7 +236,7 @@ class HitomiSearchExtractor(HitomiExtractor):
 
         if result is None:
             #  result = set(self.load_nozomi("index"))
-            result = set(self.load_nozomi("language:all"))
+            result = set(self.load_nozomi("language:japanese"))
         for tag in negative:
             result.difference_update(self.load_nozomi(tag))
 
