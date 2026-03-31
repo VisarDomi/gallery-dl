@@ -777,7 +777,7 @@ class GalleryExtractor(Extractor):
 
     subcategory = "gallery"
     filename_fmt = "{category}_{gallery_id}_{num:>03}.{extension}"
-    directory_fmt = ("{category}", "{gallery_id} {title}")
+    directory_fmt = ("{category}", "{gallery_id}")
     archive_fmt = "{gallery_id}_{num}"
     enum = "num"
 
